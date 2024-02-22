@@ -109,7 +109,7 @@ function begin_loading_status() {
     C1.style.borderRadius = "50%";
     C1.style.margin = "-40px 0 0 -40px";
     C1.style.animation = "spinAndPulse 2s linear infinite";
-    
+
     C2.style.position = "fixed";
     C2.style.top = "50%";
     C2.style.left = "50%";
@@ -229,6 +229,33 @@ function addCopyButton(botElement) {
     botElement.appendChild(messageBtnColumn);
 }
 
+
+let timeoutID = null;
+let lastInvocationTime = 0;
+let lastArgs = null;
+function do_something_but_not_too_frequently(min_interval, func) {
+    return function (...args) {
+        lastArgs = args;
+        const now = Date.now();
+        if (!lastInvocationTime || (now - lastInvocationTime) >= min_interval) {
+            lastInvocationTime = now;
+            // 现在就执行
+            setTimeout(() => {
+                func.apply(this, lastArgs);
+            }, 0);
+        } else if (!timeoutID) {
+            // 等一会执行
+            timeoutID = setTimeout(() => {
+                timeoutID = null;
+                lastInvocationTime = Date.now();
+                func.apply(this, lastArgs);
+            }, min_interval - (now - lastInvocationTime));
+        } else {
+            // 压根不执行
+        }
+    }
+}
+
 function chatbotContentChanged(attempt = 1, force = false) {
     // https://github.com/GaiZhenbiao/ChuanhuChatGPT/tree/main/web_assets/javascript
     for (var i = 0; i < attempt; i++) {
@@ -236,6 +263,8 @@ function chatbotContentChanged(attempt = 1, force = false) {
             gradioApp().querySelectorAll('#gpt-chatbot .message-wrap .message.bot').forEach(addCopyButton);
         }, i === 0 ? 0 : 200);
     }
+    // we have moved mermaid-related code to gradio-fix repository: binary-husky/gradio-fix@32150d0
+
 }
 
 
@@ -270,8 +299,8 @@ function chatbotAutoHeight() {
     }
     monitoring_input_box()
     update_height();
-    window.addEventListener('resize', function() { update_height(); });
-    window.addEventListener('scroll', function() { update_height_slow(); });
+    window.addEventListener('resize', function () { update_height(); });
+    window.addEventListener('scroll', function () { update_height_slow(); });
     setInterval(function () { update_height_slow() }, 50); // 每50毫秒执行一次
 }
 
@@ -290,8 +319,8 @@ function swap_input_area() {
     // Swap the elements
     parent.insertBefore(element2, element1);
     parent.insertBefore(element1, nextSibling);
-    if (swapped) {swapped = false;}
-    else {swapped = true;}
+    if (swapped) { swapped = false; }
+    else { swapped = true; }
 }
 
 function get_elements(consider_state_panel = false) {
@@ -314,18 +343,18 @@ function get_elements(consider_state_panel = false) {
     var height_target = parseInt(height_target);
     var chatbot_height = chatbot.style.height;
     // 交换输入区位置，使得输入区始终可用
-    if (!swapped){
-        if (panel1.top!=0 && (panel1.bottom + panel1.top)/2 < 0){ swap_input_area(); }
+    if (!swapped) {
+        if (panel1.top != 0 && (0.9 * panel1.bottom + 0.1 * panel1.top) < 0) { swap_input_area(); }
     }
-    else if (swapped){
-        if (panel2.top!=0 && panel2.top > 0){ swap_input_area(); }
+    else if (swapped) {
+        if (panel2.top != 0 && panel2.top > 0) { swap_input_area(); }
     }
     // 调整高度
     const err_tor = 5;
-    if (Math.abs(panel1.left - chatbot.getBoundingClientRect().left) < err_tor){
+    if (Math.abs(panel1.left - chatbot.getBoundingClientRect().left) < err_tor) {
         // 是否处于窄屏模式
         height_target = window.innerHeight * 0.6;
-    }else{
+    } else {
         // 调整高度
         const chatbot_height_exceed = 15;
         const chatbot_height_exceed_m = 10;
@@ -356,7 +385,7 @@ var elem_upload_component_float = null;
 var elem_upload_component = null;
 var exist_file_msg = '⚠️请先删除上传区（左上方）中的历史文件，再尝试上传。'
 
-function locate_upload_elems(){
+function locate_upload_elems() {
     elem_upload = document.getElementById('elem_upload')
     elem_upload_float = document.getElementById('elem_upload_float')
     elem_input_main = document.getElementById('user_input_main')
@@ -386,7 +415,6 @@ async function upload_files(files) {
             Object.defineProperty(elem_upload_component_float, "files", { value: files, enumerable: true });
             elem_upload_component_float.dispatchEvent(event);
         } else {
-            console.log(exist_file_msg);
             toast_push(exist_file_msg, 3000);
         }
     }
@@ -500,7 +528,7 @@ function register_upload_event() {
             toast_push('正在上传中，请稍等。', 2000);
             begin_loading_status();
         });
-    }else{
+    } else {
         toast_push("oppps", 3000);
     }
 }
@@ -583,16 +611,16 @@ function minor_ui_adjustment() {
     function auto_hide_toolbar() {
         var qq = document.getElementById('tooltip');
         var tab_nav = qq.getElementsByClassName('tab-nav');
-        if (tab_nav.length == 0){ return; }
+        if (tab_nav.length == 0) { return; }
         var btn_list = tab_nav[0].getElementsByTagName('button')
-        if (btn_list.length == 0){ return; }
+        if (btn_list.length == 0) { return; }
         // 获取页面宽度
         var page_width = document.documentElement.clientWidth;
         // 总是保留的按钮数量
         const always_preserve = 2;
         // 获取最后一个按钮的右侧位置
-        var cur_right = btn_list[always_preserve-1].getBoundingClientRect().right;
-        if (bar_btn_width.length == 0){
+        var cur_right = btn_list[always_preserve - 1].getBoundingClientRect().right;
+        if (bar_btn_width.length == 0) {
             // 首次运行，记录每个按钮的宽度
             for (var i = 0; i < btn_list.length; i++) {
                 bar_btn_width.push(btn_list[i].getBoundingClientRect().width);
@@ -602,14 +630,13 @@ function minor_ui_adjustment() {
         for (var i = always_preserve; i < btn_list.length; i++) {
             var element = btn_list[i];
             var element_right = element.getBoundingClientRect().right;
-            if (element_right!=0){ cur_right = element_right; }
+            if (element_right != 0) { cur_right = element_right; }
             if (element.style.display === 'none') {
                 if ((cur_right + bar_btn_width[i]) < (page_width * 0.37)) {
                     // 恢复显示当前按钮
                     element.style.display = 'block';
-                    // console.log('show');
                     return;
-                }else{
+                } else {
                     return;
                 }
             } else {
@@ -620,7 +647,6 @@ function minor_ui_adjustment() {
                             btn_list[j].style.display = 'none';
                         }
                     }
-                    // console.log('show');
                     return;
                 }
             }
@@ -632,8 +658,41 @@ function minor_ui_adjustment() {
     }, 200); // 每50毫秒执行一次
 }
 
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-//  第 6 部分: JS初始化函数
+//  第 6 部分: 避免滑动
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+let prevented_offset = 0;
+function limit_scroll_position() {
+    let scrollableDiv = document.querySelector('#gpt-chatbot > div.wrap');
+    scrollableDiv.addEventListener('wheel', function (e) {
+        let preventScroll = false;
+        if (e.deltaX != 0) { prevented_offset = 0; return; }
+        if (this.scrollHeight == this.clientHeight) { prevented_offset = 0; return; }
+        if (e.deltaY < 0) { prevented_offset = 0; return; }
+        if (e.deltaY > 0 && this.scrollHeight - this.clientHeight - this.scrollTop <= 1) { preventScroll = true; }
+
+        if (preventScroll) {
+            prevented_offset += e.deltaY;
+            if (Math.abs(prevented_offset) > 499) {
+                if (prevented_offset > 500) { prevented_offset = 500; }
+                if (prevented_offset < -500) { prevented_offset = -500; }
+                preventScroll = false;
+            }
+        } else {
+            prevented_offset = 0;
+        }
+        if (preventScroll) {
+            e.preventDefault();
+            return;
+        }
+    }, { passive: false }); // Passive event listener option should be false
+}
+
+
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+//  第 7 部分: JS初始化函数
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 function GptAcademicJavaScriptInit(LAYOUT = "LEFT-RIGHT") {
@@ -645,4 +704,165 @@ function GptAcademicJavaScriptInit(LAYOUT = "LEFT-RIGHT") {
     });
     chatbotObserver.observe(chatbotIndicator, { attributes: true, childList: true, subtree: true });
     if (LAYOUT === "LEFT-RIGHT") { chatbotAutoHeight(); }
+    if (LAYOUT === "LEFT-RIGHT") { limit_scroll_position(); }
+    // setInterval(function () { uml("mermaid") }, 5000); // 每50毫秒执行一次
+
+}
+
+
+function loadLive2D() {
+    try {
+        $("<link>").attr({ href: "file=themes/waifu_plugin/waifu.css", rel: "stylesheet", type: "text/css" }).appendTo('head');
+        $('body').append('<div class="waifu"><div class="waifu-tips"></div><canvas id="live2d" class="live2d"></canvas><div class="waifu-tool"><span class="fui-home"></span> <span class="fui-chat"></span> <span class="fui-eye"></span> <span class="fui-user"></span> <span class="fui-photo"></span> <span class="fui-info-circle"></span> <span class="fui-cross"></span></div></div>');
+        $.ajax({
+            url: "file=themes/waifu_plugin/waifu-tips.js", dataType: "script", cache: true, success: function () {
+                $.ajax({
+                    url: "file=themes/waifu_plugin/live2d.js", dataType: "script", cache: true, success: function () {
+                        /* 可直接修改部分参数 */
+                        live2d_settings['hitokotoAPI'] = "hitokoto.cn";  // 一言 API
+                        live2d_settings['modelId'] = 3;                  // 默认模型 ID
+                        live2d_settings['modelTexturesId'] = 44;          // 默认材质 ID
+                        live2d_settings['modelStorage'] = false;         // 不储存模型 ID
+                        live2d_settings['waifuSize'] = '210x187';
+                        live2d_settings['waifuTipsSize'] = '187x52';
+                        live2d_settings['canSwitchModel'] = true;
+                        live2d_settings['canSwitchTextures'] = true;
+                        live2d_settings['canSwitchHitokoto'] = false;
+                        live2d_settings['canTakeScreenshot'] = false;
+                        live2d_settings['canTurnToHomePage'] = false;
+                        live2d_settings['canTurnToAboutPage'] = false;
+                        live2d_settings['showHitokoto'] = false;         // 显示一言
+                        live2d_settings['showF12Status'] = false;         // 显示加载状态
+                        live2d_settings['showF12Message'] = false;        // 显示看板娘消息
+                        live2d_settings['showF12OpenMsg'] = false;         // 显示控制台打开提示
+                        live2d_settings['showCopyMessage'] = false;         // 显示 复制内容 提示
+                        live2d_settings['showWelcomeMessage'] = true;         // 显示进入面页欢迎词
+                        /* 在 initModel 前添加 */
+                        initModel("file=themes/waifu_plugin/waifu-tips.json");
+                    }
+                });
+            }
+        });
+    } catch (err) { console.log("[Error] JQuery is not defined.") }
+}
+
+function get_checkbox_selected_items(elem_id){
+    display_panel_arr = [];
+    document.getElementById(elem_id).querySelector('[data-testid="checkbox-group"]').querySelectorAll('label').forEach(label => {
+        // Get the span text
+        const spanText = label.querySelector('span').textContent;
+        // Get the input value
+        const checked = label.querySelector('input').checked;
+        if (checked) {
+            display_panel_arr.push(spanText)
+        }
+    });
+    return display_panel_arr;
+}
+
+function set_checkbox(key, bool, set_twice=false) {
+    set_success = false;
+    elem_ids = ["cbsc", "cbs"]
+    elem_ids.forEach(id => {
+        document.getElementById(id).querySelector('[data-testid="checkbox-group"]').querySelectorAll('label').forEach(label => {
+            // Get the span text
+            const spanText = label.querySelector('span').textContent;
+            if (spanText === key) {
+                if (bool){
+                    label.classList.add('selected');
+                } else {
+                    if (label.classList.contains('selected')) {
+                        label.classList.remove('selected');
+                    }
+                }
+                if (set_twice){
+                    setTimeout(() => {
+                        if (bool){
+                            label.classList.add('selected');
+                        } else {
+                            if (label.classList.contains('selected')) {
+                                label.classList.remove('selected');
+                            }
+                        }
+                    }, 5000);
+                }
+
+                label.querySelector('input').checked = bool;
+                set_success = true;
+                return
+            }
+        });
+    });
+
+    if (!set_success){
+        console.log("设置checkbox失败，没有找到对应的key")
+    }
+}
+
+function apply_cookie_for_checkbox(dark) {
+    // console.log("apply_cookie_for_checkboxes")
+    let searchString = "输入清除键";
+    let bool_value = "False";
+
+    //////////////////  darkmode  ///////////////////
+    if (getCookie("js_darkmode_cookie")) {
+        dark = getCookie("js_darkmode_cookie")
+    }
+    dark = dark == "True";
+    if (document.querySelectorAll('.dark').length) {
+        if (!dark) {
+            document.querySelectorAll('.dark').forEach(el => el.classList.remove('dark'));
+        }
+    } else {
+        if (dark) {
+            document.querySelector('body').classList.add('dark');
+        }
+    }
+
+    ////////////////////// clearButton ///////////////////////////
+    if (getCookie("js_clearbtn_show_cookie")) {
+        // have cookie
+        bool_value = getCookie("js_clearbtn_show_cookie")
+        bool_value = bool_value == "True";
+        searchString = "输入清除键";
+        if (bool_value) {
+            let clearButton = document.getElementById("elem_clear");
+            let clearButton2 = document.getElementById("elem_clear2");
+            clearButton.style.display = "block";
+            clearButton2.style.display = "block";
+            set_checkbox(searchString, true);
+        } else {
+            let clearButton = document.getElementById("elem_clear");
+            let clearButton2 = document.getElementById("elem_clear2");
+            clearButton.style.display = "none";
+            clearButton2.style.display = "none";
+            set_checkbox(searchString, false);
+        }
+    }
+
+    ////////////////////// live2d ///////////////////////////
+
+    if (getCookie("js_live2d_show_cookie")) {
+        // have cookie
+        searchString = "添加Live2D形象";
+        bool_value = getCookie("js_live2d_show_cookie");
+        bool_value = bool_value == "True";
+        if (bool_value) {
+            loadLive2D();
+            set_checkbox(searchString, true);
+        } else {
+            $('.waifu').hide();
+            set_checkbox(searchString, false);
+        }
+    } else {
+        // do not have cookie
+        // get conf
+        display_panel_arr = get_checkbox_selected_items("cbsc");
+        searchString = "添加Live2D形象";
+        if (display_panel_arr.includes(searchString)) {
+            loadLive2D();
+        } else {
+        }
+    }
+
 }
